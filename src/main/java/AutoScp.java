@@ -1,21 +1,21 @@
-import java.io.*;
 import ch.ethz.ssh2.Connection;
 import ch.ethz.ssh2.SCPClient;
 
+import java.io.*;
 import java.time.LocalDateTime;
 import java.util.*;
 
 public class AutoScp {
 
-    static final String IP ="192.168.0.1";
+    static final String IP ="192.168.1.126";
     static final int PORT = 22;
-    static final String USER = "J";
-    static final String PASSWORD = "admin";
-    static final String DESTINATION = "D:/fileFromWin";
+    static final String USER = "shuchen";
+    static final String PASSWORD = "142857";
+    static final String DESTINATION = "/home/shuchen/fileFromWin/";
     public static void main(String args[]){
         System.out.println("start sending");
         String dir = "d:/filesToMac";
-        AutoScp.cronJob(12,0,0,dir);
+        AutoScp.cronJob(10,45,0,dir);
     }
 
     private static void cronJob(int shi, int fen, int miao, String dir) {
@@ -35,6 +35,7 @@ public class AutoScp {
                             setLog(LocalDateTime.now()+"start sending file " + c.getName());
                             // create txt to represent finish
                             File finishMark = new File(c.getDirectory()+c.getName().replace(".csv",".txt"));
+                            finishMark.createNewFile();
                             if(scpSend(c.getDirectory()+c.getName(),c.getBytes()) && scpSend(c.getDirectory()+finishMark.getName(),finishMark.length())){
                                 setLog(LocalDateTime.now()+"finish sending file "+ c.getName());
                                 finishMark.delete();
@@ -60,8 +61,9 @@ public class AutoScp {
                 setLog(LocalDateTime.now()+": fail to connect to mac");
                 return false;
             }
-            SCPClient scpClient = new SCPClient(connection);
-            scpClient.put(path,length,DESTINATION,"0060");
+            SCPClient scpClient = connection.createSCPClient();
+            System.out.println(length);
+            scpClient.put(path,DESTINATION);
             connection.close();
         }catch (IOException e) {
             e.printStackTrace();
@@ -97,9 +99,9 @@ public class AutoScp {
 
     private static void setLog(String log){
         try {
-            File writename = new File("d:fileToMac/log/log.txt");
-            writename.createNewFile();
-            BufferedWriter out = new BufferedWriter(new FileWriter(writename));
+            File writename = new File("d:/filesToMac/log/log.txt");
+            BufferedWriter out = new BufferedWriter(new OutputStreamWriter(
+                    new FileOutputStream(writename, true)));
             out.write(log+"\n");
             out.flush();
             out.close();
