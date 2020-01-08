@@ -181,6 +181,7 @@ public class AutoScp {
                 if(scpSend(file.getAbsolutePath(),file.length()) && scpSend(finishMark.getAbsolutePath(),finishMark.length())){
                     setLog(LocalDateTime.now()+": finish sending file "+ file.getName());
                     finishMark.delete();
+                    //todo move to another dir rather than delete
                     file.delete();
                 }
             }catch (Exception ee){
