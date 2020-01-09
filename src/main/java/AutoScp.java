@@ -7,28 +7,40 @@ import java.util.*;
 
 public class AutoScp {
 
-    static final String IP ="10.16.50.175";
-    static final int PORT = 22;
-    static final String USER = "jonathanelmer";
-    static final String PASSWORD = "admin";
+    private String IP;
+    private int PORT;
+    private String USER;
+    private String PASSWORD;
 
     //    outputSetting
-    static final String PANEL = "Reasearch - Export";
-    static final String MMXFILE = "C:/ProgramData/Persyst/Trend Settings Research - OOM Export.mmx";
+    private String PANEL;
+    private String MMXFILE;
 
     //    Directory
-    static final String EEGDIRECTORY = "C:/EEG-Data";
-    static final String CSVDIRECTORY = "C:/filesToMac/";
-    static final String DESTINATION = "/Volumes/INFLUX_RAID/newFilesFromWin";
-    static final String FINISHEDFILES = "C:/sentCSV/";
+    private String EEGDIRECTORY;
+    private String CSVDIRECTORY;
+    private String DESTINATION;
+    private String FINISHEDFILES;
 
 
 
-    public static void main(String args[]){
-        AutoScp.cronJob(12,0,0);
+    public AutoScp(String IP, int PORT, String USER, String PASSWORD, String PANEL, String MMXFILE, String EEGDIRECTORY,
+                   String CSVDIRECTORY, String DESTINATION, String FINISHEDFILES){
+        this.IP = IP;
+        this.PORT = PORT;
+        this.USER = USER;
+        this.PASSWORD = PASSWORD;
+        this.PANEL = PANEL;
+        this.MMXFILE = MMXFILE;
+        this.EEGDIRECTORY = EEGDIRECTORY;
+        this.CSVDIRECTORY = CSVDIRECTORY;
+        this.DESTINATION = DESTINATION;
+        this.FINISHEDFILES = FINISHEDFILES;
     }
 
-    private static void cronJob(int hour, int minute, int second) {
+
+
+    private void cronJob(int hour, int minute, int second) {
         Calendar cal = Calendar.getInstance();
         cal.set(Calendar.HOUR_OF_DAY, hour);
         cal.set(Calendar.MINUTE, minute);
@@ -47,7 +59,7 @@ public class AutoScp {
         }, cal.getTime(), 24 * 60 * 60 * 1000);
     }
 
-    private static Boolean scpSend(String path, long length){
+    private Boolean scpSend(String path, long length){
         Connection connection = new Connection(IP,PORT);
         try {
             connection.connect();
@@ -95,7 +107,7 @@ public class AutoScp {
         return eegFileList;
     };
 
-    private static List<File> convertToCSV( HashMap<String,String> renameList){
+    private List<File> convertToCSV( HashMap<String,String> renameList){
         List<File> successfulCSV = new ArrayList<>();
         for (String sourceFile : renameList.keySet()){
             String arFileOutput = CSVDIRECTORY + renameList.get(sourceFile) + "ar.csv";
@@ -173,7 +185,7 @@ public class AutoScp {
         }
     }
 
-    private static void sendCSVFiles(List<File> fileList){
+    private void sendCSVFiles(List<File> fileList){
         for(File file: fileList){
             //scp
             try {
@@ -220,4 +232,20 @@ public class AutoScp {
             e.printStackTrace();
         }
     }
+
+    public static void main(String args[]){
+        try{
+            Properties pps = new Properties();
+            InputStream in = AutoScp.class.getClassLoader().getResourceAsStream(
+                    "test.properties");
+            pps.load(in);
+            AutoScp autoScp = new AutoScp(pps.getProperty("IP"),Integer.parseInt(pps.getProperty("PORT")),pps.getProperty("USER"),
+                    pps.getProperty("PASSWORD"),pps.getProperty("PANEL"),pps.getProperty("MMXFILE"),pps.getProperty("EEGDIRECTORY"),pps.getProperty("CSVDIRECTORY"),pps.getProperty("DESTINATION"),pps.getProperty("FINISHEDFILES"));
+            autoScp.cronJob(12,0,0);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+    }
 }
+
