@@ -7,10 +7,10 @@ import java.util.*;
 
 public class AutoScp {
 
-    static final String IP ="x.x.x.x";
+    static final String IP ="10.16.50.175";
     static final int PORT = 22;
-    static final String USER = "xxxx";
-    static final String PASSWORD = "xxxx";
+    static final String USER = "jonathanelmer";
+    static final String PASSWORD = "admin";
 
     //    outputSetting
     static final String PANEL = "Reasearch - Export";
@@ -18,8 +18,10 @@ public class AutoScp {
 
     //    Directory
     static final String EEGDIRECTORY = "C:/EEG-Data";
-    static final String CSVDIRECTORY = "D:/filesToMac/";
-    static final String DESTINATION = "xxxxxx";
+    static final String CSVDIRECTORY = "C:/filesToMac/";
+    static final String DESTINATION = "/Volumes/INFLUX_RAID/newFilesFromWin";
+    static final String FINISHEDFILES = "C:/sentCSV/";
+
 
 
     public static void main(String args[]){
@@ -181,8 +183,8 @@ public class AutoScp {
                 if(scpSend(file.getAbsolutePath(),file.length()) && scpSend(finishMark.getAbsolutePath(),finishMark.length())){
                     setLog(LocalDateTime.now()+": finish sending file "+ file.getName());
                     finishMark.delete();
-                    //todo move to another dir rather than delete
-                    file.delete();
+                    //move to another dir rather than delete
+                    file.renameTo(new File(FINISHEDFILES+file.getName()));
                 }
             }catch (Exception ee){
                 setLog(LocalDateTime.now()+": sending file failed "+ file.getName());
