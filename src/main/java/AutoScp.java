@@ -78,11 +78,14 @@ public class AutoScp {
         return true;
     }
 
-    private static HashMap<String,String> findEEGFiles (String dir){
+    private HashMap<String,String> findEEGFiles (String dir){
         File directory = new File(dir);
         File[] files = directory.listFiles();
         LinkedList<File> queueList = new LinkedList<>();
         HashMap<String,String> eegFileList = new HashMap<>();
+        if(files == null || files.length==0){
+            return eegFileList;
+        }
         for (int i = 0; i <files.length;i++){
             if(files[i].isDirectory()){
                 queueList.add(files[i]);
