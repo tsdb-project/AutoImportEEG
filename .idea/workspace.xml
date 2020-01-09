@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="1af8bdf8-f6bb-4daf-9560-9ee115f4cdba" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/AutoScp.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/AutoScp.java" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -58,7 +59,7 @@
       <option name="presentableId" value="Default" />
       <updated>1578517172502</updated>
       <workItem from="1578517173841" duration="920000" />
-      <workItem from="1578596357229" duration="5428000" />
+      <workItem from="1578596357229" duration="6286000" />
     </task>
     <servers />
   </component>

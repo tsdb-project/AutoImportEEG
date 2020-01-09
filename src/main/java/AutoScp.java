@@ -21,11 +21,12 @@ public class AutoScp {
     private String CSVDIRECTORY;
     private String DESTINATION;
     private String FINISHEDFILES;
+    private String LOGPATH;
 
 
 
     public AutoScp(String IP, int PORT, String USER, String PASSWORD, String PANEL, String MMXFILE, String EEGDIRECTORY,
-                   String CSVDIRECTORY, String DESTINATION, String FINISHEDFILES){
+                   String CSVDIRECTORY, String DESTINATION, String FINISHEDFILES, String LOGPATH){
         this.IP = IP;
         this.PORT = PORT;
         this.USER = USER;
@@ -36,6 +37,7 @@ public class AutoScp {
         this.CSVDIRECTORY = CSVDIRECTORY;
         this.DESTINATION = DESTINATION;
         this.FINISHEDFILES = FINISHEDFILES;
+        this.LOGPATH = LOGPATH;
     }
 
 
@@ -167,7 +169,7 @@ public class AutoScp {
         return successfulCSV;
     }
 
-    private static int switchRegistry(String fileType){
+    private int switchRegistry(String fileType){
         String value;
         String entry = "HKEY_CURRENT_USER\\Software\\Persyst\\PSMMarker\\Settings";
         String parameter = "_ForceRawTrends";
@@ -208,7 +210,7 @@ public class AutoScp {
         System.out.println("finished");
     }
 
-    private static boolean deleteDir(File dir) {
+    private boolean deleteDir(File dir) {
         if (dir.isDirectory()) {
             String[] children = dir.list();
             for (int i=0; i<children.length; i++) {
@@ -223,9 +225,9 @@ public class AutoScp {
 
 
 
-    private static void setLog(String log){
+    private void setLog(String log){
         try {
-            File writename = new File("d:/filesToMac/log/log.txt");
+            File writename = new File(LOGPATH);
             BufferedWriter out = new BufferedWriter(new OutputStreamWriter(
                     new FileOutputStream(writename, true)));
             out.write(log+"\n");
@@ -243,7 +245,8 @@ public class AutoScp {
                     new File("config.properties")));
             pps.load(in);
             AutoScp autoScp = new AutoScp(pps.getProperty("IP"),Integer.parseInt(pps.getProperty("PORT")),pps.getProperty("USER"),
-                    pps.getProperty("PASSWORD"),pps.getProperty("PANEL"),pps.getProperty("MMXFILE"),pps.getProperty("EEGDIRECTORY"),pps.getProperty("CSVDIRECTORY"),pps.getProperty("DESTINATION"),pps.getProperty("FINISHEDFILES"));
+                    pps.getProperty("PASSWORD"),pps.getProperty("PANEL"),pps.getProperty("MMXFILE"),pps.getProperty("EEGDIRECTORY"),
+                    pps.getProperty("CSVDIRECTORY"),pps.getProperty("DESTINATION"),pps.getProperty("FINISHEDFILES"),pps.getProperty("LOGPATH"));
             autoScp.cronJob(12,0,0);
         }catch (Exception e){
             e.printStackTrace();
