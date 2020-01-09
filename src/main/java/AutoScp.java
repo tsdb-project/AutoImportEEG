@@ -236,8 +236,8 @@ public class AutoScp {
     public static void main(String args[]){
         try{
             Properties pps = new Properties();
-            InputStream in = AutoScp.class.getClassLoader().getResourceAsStream(
-                    "test.properties");
+            InputStream in = new BufferedInputStream(new FileInputStream(
+                    new File("config.properties")));
             pps.load(in);
             AutoScp autoScp = new AutoScp(pps.getProperty("IP"),Integer.parseInt(pps.getProperty("PORT")),pps.getProperty("USER"),
                     pps.getProperty("PASSWORD"),pps.getProperty("PANEL"),pps.getProperty("MMXFILE"),pps.getProperty("EEGDIRECTORY"),pps.getProperty("CSVDIRECTORY"),pps.getProperty("DESTINATION"),pps.getProperty("FINISHEDFILES"));
