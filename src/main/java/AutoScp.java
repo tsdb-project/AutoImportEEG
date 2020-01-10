@@ -117,8 +117,8 @@ public class AutoScp {
     private List<File> convertToCSV( HashMap<String,String> renameList){
         List<File> successfulCSV = new ArrayList<>();
         for (String sourceFile : renameList.keySet()){
-            String arFileOutput = CSVDIRECTORY + renameList.get(sourceFile) + "ar.csv";
-            String noarFileOutput = CSVDIRECTORY + renameList.get(sourceFile) + "noar.csv";
+            String arFileOutput = CSVDIRECTORY + renameList.get(sourceFile).toUpperCase() + "ar.csv";
+            String noarFileOutput = CSVDIRECTORY + renameList.get(sourceFile).toUpperCase() + "noar.csv";
             String arCommand = String.format("%sPSCLI /panel=\"%s\" /SourceFile=\"%s\" /OutputFile=\"%s\" /MMX=\"%s\" /ExportCSV",PSCLIDIRECTORY,PANEL,sourceFile,arFileOutput,MMXFILE);
             String noarCommand = String.format("%sPSCLI /panel=\"%s\" /SourceFile=\"%s\" /OutputFile=\"%s\" /MMX=\"%s\" /ExportCSV",PSCLIDIRECTORY,PANEL,sourceFile,noarFileOutput,MMXFILE);
 
@@ -133,7 +133,9 @@ public class AutoScp {
 
                 System.out.println(value);
                 if(value == 0){
-                    successfulCSV.add(new File(arFileOutput));
+                    File tmpFile = new File(arFileOutput);
+                    tmpFile.renameTo(new File(tmpFile.getPath()+"/"+arFileOutput));
+                    successfulCSV.add(tmpFile);
                     System.out.println(LocalDateTime.now()+": generate ar csv file successful: "+ arFileOutput);
                     value += switchRegistry("noar");
                     process = Runtime.getRuntime().exec(noarCommand);
@@ -141,7 +143,10 @@ public class AutoScp {
                     new RunThread(process.getErrorStream(),"ERR").start();
                     value += process.waitFor();
                     if(value == 0){
-                        successfulCSV.add(new File(noarFileOutput));
+                        File tmpFile2 = new File(noarFileOutput);
+                        tmpFile.renameTo(new File(tmpFile.getPath()+"/"+noarFileOutput));
+                        successfulCSV.add(tmpFile);
+                        successfulCSV.add(tmpFile2);
                         File patientFolder = new File(sourceFile).getParentFile();
                         Boolean deleteValue = deleteDir(patientFolder);
                         if(deleteValue){
@@ -249,7 +254,10 @@ public class AutoScp {
         Queue<File> fileQueue = new LinkedList<>();
         if(folder.listFiles()!=null){
             for(File f: folder.listFiles()){
-                fileQueue.add(f);
+                if(f.getName().equals(year)){
+                    fileQueue.add(f);
+                }
+
             }
         }
         boolean ismoved = false;
