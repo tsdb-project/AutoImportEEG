@@ -201,10 +201,10 @@ public class AutoScp {
                 // create txt to represent finish
                 File finishMark = new File(file.getAbsolutePath().replace(".csv",".txt"));
                 if(scpSend(file.getAbsolutePath(),file.length()) && scpSend(finishMark.getAbsolutePath(),finishMark.length())){
-                    setLog(LocalDateTime.now()+": finish sending file "+ file.getName());
                     finishMark.delete();
                     //move to another dir rather than delete
-                    file.renameTo(new File(FINISHEDFILES+file.getName()));
+                    moveFile(FINISHEDFILES,file);
+                    setLog(LocalDateTime.now()+": finish sending file "+ file.getName());
                 }
             }catch (Exception ee){
                 setLog(LocalDateTime.now()+": sending file failed "+ file.getName());
@@ -238,6 +238,38 @@ public class AutoScp {
             out.close();
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private void moveFile(String path, File file){
+        File folder = new File(path);
+        String year = file.getName().substring(4,8);
+        String pid = file.getName().substring(0,12);
+        Queue<File> fileQueue = new LinkedList<>();
+        if(folder.listFiles()!=null){
+            for(File f: folder.listFiles()){
+                fileQueue.add(f);
+            }
+        }
+        boolean ismoved = false;
+        while (!fileQueue.isEmpty()){
+            File current = fileQueue.poll();
+            if(current.getName().equals(year)){
+                for(File f: current.listFiles()){
+                    fileQueue.add(f);
+                }
+            }else if(current.getName().equals(pid)){
+                file.renameTo(new File(current.getPath()+"/"+file.getName()));
+                ismoved = true;
+                break;
+            }
+        }
+        if(!ismoved){
+            File newFolder = new File(path+"/"+year);
+            newFolder.mkdir();
+            File subFolder = new File(path+"/"+year+"/"+pid);
+            subFolder.mkdir();
+            file.renameTo(new File(subFolder.getPath()+"/"+file.getName()));
         }
     }
 
