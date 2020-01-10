@@ -130,12 +130,8 @@ public class AutoScp {
                 new RunThread(process.getInputStream(), "INFO").start();
                 new RunThread(process.getErrorStream(),"ERR").start();
                 value += process.waitFor();
-
-                System.out.println(value);
                 if(value == 0){
-                    File tmpFile = new File(arFileOutput);
-                    tmpFile.renameTo(new File(tmpFile.getPath()+"/"+arFileOutput));
-                    successfulCSV.add(tmpFile);
+                    successfulCSV.add(new File(arFileOutput));
                     System.out.println(LocalDateTime.now()+": generate ar csv file successful: "+ arFileOutput);
                     value += switchRegistry("noar");
                     process = Runtime.getRuntime().exec(noarCommand);
@@ -143,10 +139,7 @@ public class AutoScp {
                     new RunThread(process.getErrorStream(),"ERR").start();
                     value += process.waitFor();
                     if(value == 0){
-                        File tmpFile2 = new File(noarFileOutput);
-                        tmpFile.renameTo(new File(tmpFile.getPath()+"/"+noarFileOutput));
-                        successfulCSV.add(tmpFile);
-                        successfulCSV.add(tmpFile2);
+                        successfulCSV.add(new File(noarFileOutput));
                         File patientFolder = new File(sourceFile).getParentFile();
                         Boolean deleteValue = deleteDir(patientFolder);
                         if(deleteValue){
