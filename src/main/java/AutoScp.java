@@ -18,6 +18,7 @@ public class AutoScp {
 
     //    Directory
     private String EEGDIRECTORY;
+    private String PSCLIDIRECTORY;
     private String CSVDIRECTORY;
     private String DESTINATION;
     private String FINISHEDFILES;
@@ -26,7 +27,7 @@ public class AutoScp {
 
 
     public AutoScp(String IP, int PORT, String USER, String PASSWORD, String PANEL, String MMXFILE, String EEGDIRECTORY,
-                   String CSVDIRECTORY, String DESTINATION, String FINISHEDFILES, String LOGPATH){
+                   String CSVDIRECTORY, String PSCLIDIRECTORY,String DESTINATION, String FINISHEDFILES, String LOGPATH){
         this.IP = IP;
         this.PORT = PORT;
         this.USER = USER;
@@ -34,6 +35,7 @@ public class AutoScp {
         this.PANEL = PANEL;
         this.MMXFILE = MMXFILE;
         this.EEGDIRECTORY = EEGDIRECTORY;
+        this.PSCLIDIRECTORY = PSCLIDIRECTORY;
         this.CSVDIRECTORY = CSVDIRECTORY;
         this.DESTINATION = DESTINATION;
         this.FINISHEDFILES = FINISHEDFILES;
@@ -102,7 +104,7 @@ public class AutoScp {
                     queueList.add(currectFiles[j]);
                 }else{
 //                    change to .eeg
-                    if(currectFiles[j].getName().endsWith(".csv")){
+                    if(currectFiles[j].getName().endsWith(".eeg")){
                         eegFileList.put(currectFiles[j].getAbsolutePath(), currectFiles[j].getParentFile().getName());
                     }
                 }
@@ -117,8 +119,8 @@ public class AutoScp {
         for (String sourceFile : renameList.keySet()){
             String arFileOutput = CSVDIRECTORY + renameList.get(sourceFile) + "ar.csv";
             String noarFileOutput = CSVDIRECTORY + renameList.get(sourceFile) + "noar.csv";
-            String arCommand = String.format("PSCLI /panel='%s' /SourceFile='%s' /OutputFile='%s' /MMX='%s' /ExportCSV",PANEL,sourceFile,arFileOutput,MMXFILE);
-            String noarCommand = String.format("PSCLI /panel='%s' /SourceFile='%s' /OutputFile='%s' /MMX='%s' /ExportCSV",PANEL,sourceFile,noarFileOutput,MMXFILE);
+            String arCommand = String.format("%sPSCLI /panel=\"%s\" /SourceFile=\"%s\" /OutputFile=\"%s\" /MMX=\"%s\" /ExportCSV",PSCLIDIRECTORY,PANEL,sourceFile,arFileOutput,MMXFILE);
+            String noarCommand = String.format("%sPSCLI /panel=\"%s\" /SourceFile=\"%s\" /OutputFile=\"%s\" /MMX=\"%s\" /ExportCSV",PSCLIDIRECTORY,PANEL,sourceFile,noarFileOutput,MMXFILE);
 
             System.out.println("currect source file: " + sourceFile);
 
@@ -129,6 +131,7 @@ public class AutoScp {
                 new RunThread(process.getErrorStream(),"ERR").start();
                 value += process.waitFor();
 
+                System.out.println(value);
                 if(value == 0){
                     successfulCSV.add(new File(arFileOutput));
                     System.out.println(LocalDateTime.now()+": generate ar csv file successful: "+ arFileOutput);
@@ -183,10 +186,10 @@ public class AutoScp {
         try{
             Runtime.getRuntime().exec("reg add " + entry + " /v " + parameter + " /t REG_DWORD /d " + value + " /f");
             setLog(LocalDateTime.now()+": change registry to generate "+ fileType + " successful !" );
-            return 1;
+            return 0;
         }catch (Exception e){
             setLog(LocalDateTime.now()+": change registry to generate "+ fileType + " failed !" );
-            return 0;
+            return 1;
         }
     }
 
@@ -246,7 +249,7 @@ public class AutoScp {
             pps.load(in);
             AutoScp autoScp = new AutoScp(pps.getProperty("IP"),Integer.parseInt(pps.getProperty("PORT")),pps.getProperty("USER"),
                     pps.getProperty("PASSWORD"),pps.getProperty("PANEL"),pps.getProperty("MMXFILE"),pps.getProperty("EEGDIRECTORY"),
-                    pps.getProperty("CSVDIRECTORY"),pps.getProperty("DESTINATION"),pps.getProperty("FINISHEDFILES"),pps.getProperty("LOGPATH"));
+                    pps.getProperty("CSVDIRECTORY"),pps.getProperty("PSCLIDIRCTORY"),pps.getProperty("DESTINATION"),pps.getProperty("FINISHEDFILES"),pps.getProperty("LOGPATH"));
             autoScp.cronJob(12,0,0);
         }catch (Exception e){
             e.printStackTrace();
