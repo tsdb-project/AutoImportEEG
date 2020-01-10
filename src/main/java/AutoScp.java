@@ -63,7 +63,7 @@ public class AutoScp {
         }, cal.getTime(), 24 * 60 * 60 * 1000);
     }
 
-    private Boolean scpSend(String path, long length){
+    private Boolean scpSend(String path){
         Connection connection = new Connection(IP,PORT);
         try {
             connection.connect();
@@ -200,7 +200,8 @@ public class AutoScp {
                 setLog(LocalDateTime.now()+"start sending file " + file.getName());
                 // create txt to represent finish
                 File finishMark = new File(file.getAbsolutePath().replace(".csv",".txt"));
-                if(scpSend(file.getAbsolutePath(),file.length()) && scpSend(finishMark.getAbsolutePath(),finishMark.length())){
+                finishMark.createNewFile();
+                if(scpSend(file.getAbsolutePath()) && scpSend(finishMark.getAbsolutePath())){
                     finishMark.delete();
                     //move to another dir rather than delete
                     moveFile(FINISHEDFILES,file);
