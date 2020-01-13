@@ -277,7 +277,7 @@ public class AutoScp {
             AutoScp autoScp = new AutoScp(pps.getProperty("IP"),Integer.parseInt(pps.getProperty("PORT")),pps.getProperty("USER"),
                     pps.getProperty("PASSWORD"),pps.getProperty("PANEL"),pps.getProperty("MMXFILE"),pps.getProperty("EEGDIRECTORY"),
                     pps.getProperty("CSVDIRECTORY"),pps.getProperty("PSCLIDIRCTORY"),pps.getProperty("DESTINATION"),pps.getProperty("FINISHEDFILES"),pps.getProperty("LOGPATH"));
-            autoScp.cronJob(12,0,0);
+            autoScp.cronJob(19,0,0);
         }catch (Exception e){
             e.printStackTrace();
         }
