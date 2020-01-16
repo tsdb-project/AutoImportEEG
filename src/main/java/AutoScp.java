@@ -1,5 +1,6 @@
 import ch.ethz.ssh2.Connection;
 import ch.ethz.ssh2.SCPClient;
+import sun.reflect.misc.FieldUtil;
 
 import java.io.*;
 import java.time.LocalDateTime;
@@ -56,8 +57,9 @@ public class AutoScp {
                 HashMap<String,String> eegFileList = findEEGFiles(EEGDIRECTORY);
                 if(eegFileList.size() != 0){
                     setLog(LocalDateTime.now()+ ": start converting files and send to the Mac");
-                    List<File> successCSV  = convertToCSV(eegFileList);
-                    sendCSVFiles(successCSV);
+                    List<File> successCSV = convertToCSV(eegFileList);
+//                    List<File> toBesent = getAllCSV(CSVDIRECTORY);
+//                    sendCSVFiles(toBesent);
                 }
             }
         }, cal.getTime(), 24 * 60 * 60 * 1000);
@@ -266,6 +268,18 @@ public class AutoScp {
         subFolder.mkdir();
         return file.renameTo(new File(subFolder.getPath()+"/"+file.getName()));
 
+    }
+
+    private List<File> getAllCSV(String dir){
+        List<File> toBeSent = new ArrayList<>();
+        File folder = new File(dir);
+        File[] files = folder.listFiles();
+        for(File f: files){
+            if(f.isFile() && f.getName().toLowerCase().endsWith(".csv")){
+                toBeSent.add(f);
+            }
+        }
+        return toBeSent;
     }
 
     public static void main(String args[]){
