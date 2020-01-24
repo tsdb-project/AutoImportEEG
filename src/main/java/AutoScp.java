@@ -1,6 +1,5 @@
 import ch.ethz.ssh2.Connection;
 import ch.ethz.ssh2.SCPClient;
-import sun.reflect.misc.FieldUtil;
 
 import java.io.*;
 import java.time.LocalDateTime;
@@ -54,13 +53,28 @@ public class AutoScp {
         Timer timer = new Timer();
         timer.schedule(new TimerTask() {
             public void run() {
-                HashMap<String,String> eegFileList = findEEGFiles(EEGDIRECTORY);
-                if(eegFileList.size() != 0){
-                    setLog(LocalDateTime.now()+ ": start converting files and send to the Mac");
-                    List<File> successCSV = convertToCSV(eegFileList);
-//                    List<File> toBesent = getAllCSV(CSVDIRECTORY);
-//                    sendCSVFiles(toBesent);
+                // process erd files to generate lay files
+                List<File> ergFileList = findERGFiles(EEGDIRECTORY);
+                if(ergFileList.size() != 0){
+                    setLog(LocalDateTime.now()+ ": start processing ERD files");
+                    processErdFiles(ergFileList);
                 }
+
+                // convert lay files to csv files
+                List<File> layFileList = findProcessedFiles(EEGDIRECTORY);
+                if(layFileList.size() != 0){
+                    setLog(LocalDateTime.now()+ ": start converting lay files");
+                    convertToCSV(layFileList);
+                }
+
+                // send csv files
+//                List<File> toBesent = getAllCSV(CSVDIRECTORY);
+//                if(toBesent.size() != 0){
+//                    setLog(LocalDateTime.now()+ ": start sending csv files");
+//                    convertToCSV(toBesent);
+//                }
+
+
             }
         }, cal.getTime(), 24 * 60 * 60 * 1000);
     }
@@ -84,11 +98,11 @@ public class AutoScp {
         return true;
     }
 
-    private HashMap<String,String> findEEGFiles (String dir){
+    private List<File> findERGFiles (String dir){
         File directory = new File(dir);
         File[] files = directory.listFiles();
         LinkedList<File> queueList = new LinkedList<>();
-        HashMap<String,String> eegFileList = new HashMap<>();
+        List<File> eegFileList = new ArrayList<>();
         if(files == null || files.length==0){
             return eegFileList;
         }
@@ -105,9 +119,9 @@ public class AutoScp {
                 if(currectFiles[j].isDirectory()){
                     queueList.add(currectFiles[j]);
                 }else{
-//                    change to .eeg
                     if(currectFiles[j].getName().endsWith(".eeg")){
-                        eegFileList.put(currectFiles[j].getAbsolutePath(), currectFiles[j].getParentFile().getName());
+                        String erdFile = currectFiles[j].getAbsolutePath().replace(".eeg",".erd");
+                        eegFileList.add(new File(erdFile));
                     }
                 }
             }
@@ -116,15 +130,72 @@ public class AutoScp {
         return eegFileList;
     };
 
-    private List<File> convertToCSV( HashMap<String,String> renameList){
-        List<File> successfulCSV = new ArrayList<>();
-        for (String sourceFile : renameList.keySet()){
-            String arFileOutput = CSVDIRECTORY + renameList.get(sourceFile).toUpperCase() + "ar.csv";
-            String noarFileOutput = CSVDIRECTORY + renameList.get(sourceFile).toUpperCase() + "noar.csv";
-            String arCommand = String.format("%sPSCLI /panel=\"%s\" /SourceFile=\"%s\" /OutputFile=\"%s\" /MMX=\"%s\" /ExportCSV",PSCLIDIRECTORY,PANEL,sourceFile,arFileOutput,MMXFILE);
-            String noarCommand = String.format("%sPSCLI /panel=\"%s\" /SourceFile=\"%s\" /OutputFile=\"%s\" /MMX=\"%s\" /ExportCSV",PSCLIDIRECTORY,PANEL,sourceFile,noarFileOutput,MMXFILE);
 
-            System.out.println("currect source file: " + sourceFile);
+    private List<File> findProcessedFiles(String dir){
+        File directory = new File(dir);
+        File[] files = directory.listFiles();
+        LinkedList<File> queueList = new LinkedList<>();
+        List<File> layFileList = new ArrayList<>();
+        if(files == null || files.length==0){
+            return layFileList;
+        }
+        for (int i = 0; i <files.length;i++){
+            if(files[i].isDirectory()){
+                queueList.add(files[i]);
+            }
+        }
+
+        while (! queueList.isEmpty()){
+            File tempDirectory = queueList.removeFirst();
+            File[] currectFiles = tempDirectory.listFiles();
+            for (int j = 0; j< currectFiles.length;j ++){
+                if(currectFiles[j].isDirectory()){
+                    queueList.add(currectFiles[j]);
+                }else{
+                    if(currectFiles[j].getName().endsWith(".lay")){
+                        layFileList.add(currectFiles[j]);
+                    }
+                }
+            }
+        }
+
+        return layFileList;
+    }
+
+    private List<File> processErdFiles(List<File> fileList){
+        List<File> successfulFiles = new ArrayList<>();
+        for (File file: fileList){
+            String command = String.format("%sPSCLI /panel=\"%s\" /FileType=XLTEK  /SourceFile=\"%s\" /Process /MMX=\"%s\" ",PSCLIDIRECTORY,PANEL,file.getAbsolutePath(),MMXFILE);
+            System.out.println("erd process command: " + command);
+            try{
+                Process process = Runtime.getRuntime().exec(command);
+                new RunThread(process.getInputStream(), "INFO").start();
+                new RunThread(process.getErrorStream(),"ERR").start();
+                if( process.waitFor() == 0){
+                    setLog(LocalDateTime.now()+": process file successfully: "+ file.getName());
+                    successfulFiles.add(file);
+                }else {
+                    setLog(LocalDateTime.now()+": process file failed: "+ file.getName());
+                }
+            }catch (Exception e){
+                setLog(LocalDateTime.now()+": process file error occurred: "+ file.getName());
+            }
+        }
+        return successfulFiles;
+    }
+
+
+
+    private List<File> convertToCSV( List<File> layFileToConvert){
+        List<File> successfulCSV = new ArrayList<>();
+
+        for (File layFile : layFileToConvert){
+            String arFileOutput = CSVDIRECTORY + layFile.getParent().toUpperCase() + "ar.csv";
+            String noarFileOutput = CSVDIRECTORY + layFile.getParent().toUpperCase() + "noar.csv";
+            String arCommand = String.format("%sPSCLI /panel=\"%s\" /SourceFile=\"%s\" /FileType=XLTEK /Process /OutputFile=\"%s\" /MMX=\"%s\" /ExportCSV",PSCLIDIRECTORY,PANEL,layFile,arFileOutput,MMXFILE);
+            String noarCommand = String.format("%sPSCLI /panel=\"%s\" /SourceFile=\"%s\" /FileType=XLTEK /Process /OutputFile=\"%s\" /MMX=\"%s\" /ExportCSV",PSCLIDIRECTORY,PANEL,layFile,noarFileOutput,MMXFILE);
+
+            System.out.println("csv convert command: " + arCommand);
 
             try{
                 int value = switchRegistry("ar");
@@ -142,14 +213,14 @@ public class AutoScp {
                     value += process.waitFor();
                     if(value == 0){
                         successfulCSV.add(new File(noarFileOutput));
-                        File patientFolder = new File(sourceFile).getParentFile();
-                        Boolean deleteValue = deleteDir(patientFolder);
-                        if(deleteValue){
-                            System.out.println(LocalDateTime.now()+": generate noar csv file successful: "+ noarFileOutput);
-                            System.out.println(LocalDateTime.now()+": delete folder successful: "+ patientFolder.getName());
-                        }else{
-                            setLog(LocalDateTime.now()+": generate both csv file successful, but delete folder failed: "+ patientFolder.getName());
-                        }
+//                        File patientFolder = new File(sourceFile).getParentFile();
+//                        Boolean deleteValue = deleteDir(patientFolder);
+//                        if(deleteValue){
+//                            System.out.println(LocalDateTime.now()+": generate noar csv file successful: "+ noarFileOutput);
+//                            System.out.println(LocalDateTime.now()+": delete folder successful: "+ patientFolder.getName());
+//                        }else{
+//                            setLog(LocalDateTime.now()+": generate both csv file successful, but delete folder failed: "+ patientFolder.getName());
+//                        }
                     }else{
                         setLog(LocalDateTime.now()+": generate noar csv file failed: "+ noarFileOutput);
                     }
@@ -162,12 +233,12 @@ public class AutoScp {
             }
         }
 
-        File[] patientFolders = new File(EEGDIRECTORY).listFiles();
-        for (File patientFolder : patientFolders){
-            if(patientFolder.isDirectory() && patientFolder.list().length == 0){
-                patientFolder.delete();
-            }
-        }
+//        File[] patientFolders = new File(EEGDIRECTORY).listFiles();
+//        for (File patientFolder : patientFolders){
+//            if(patientFolder.isDirectory() && patientFolder.list().length == 0){
+//                patientFolder.delete();
+//            }
+//        }
 
         return successfulCSV;
     }
